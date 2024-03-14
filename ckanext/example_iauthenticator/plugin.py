@@ -40,7 +40,7 @@ class ExampleIAuthenticatorPlugin(p.SingletonPlugin):
                 toolkit.url_for(u'example_iauthenticator.custom_login'),
                 toolkit.url_for(u'example_iauthenticator.custom_logout')]:
             response = make_response(toolkit.request.path)
-            response.set_cookie(u'example_iauthenticator', u'hi')
+            response.set_cookie(u'example_iauthenticator', u'hi', secure=True, httponly=True, samesite='Lax')
 
             return response
 
