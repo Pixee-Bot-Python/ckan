@@ -7,8 +7,6 @@ import sys
 import cgitb
 import warnings
 import traceback
-
-import xml.dom.minidom
 from typing import Collection, Any, Optional, Type, overload
 
 import requests
@@ -33,6 +31,7 @@ from ckan.lib.search.query import (
     QueryOptions, convert_legacy_parameters_to_solr  # type: ignore
 )
 from ckan.lib.search.index import SearchIndex
+import defusedxml.minidom
 
 
 log = logging.getLogger(__name__)
@@ -369,7 +368,7 @@ def check_solr_schema_version(schema_file: Optional[str]=None) -> bool:
         with open(schema_file, 'rb') as f:
             schema_content = f.read()
 
-    tree = xml.dom.minidom.parseString(schema_content)
+    tree = defusedxml.minidom.parseString(schema_content)
 
     # Up to CKAN 2.9 the schema version was stored in the `version` attribute.
     # Going forward, we are storing it in the `name` one in the form `ckan-X.Y`
