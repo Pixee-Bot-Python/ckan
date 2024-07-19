@@ -196,15 +196,15 @@ class TestImportStar(object):
         fails = {}
         passes = []
         for path, filename in walk_python_files():
-            f = open(path, "r")
-            count = 1
-            errors = []
-            for line in f:
-                if re_import_star.search(line):
-                    errors.append(
-                        "%s ln:%s import *\n\t%s" % (filename, count, line)
-                    )
-                count += 1
+            with open(path, "r") as f:
+                count = 1
+                errors = []
+                for line in f:
+                    if re_import_star.search(line):
+                        errors.append(
+                            "%s ln:%s import *\n\t%s" % (filename, count, line)
+                        )
+                    count += 1
             if errors and filename not in blacklist:
                 fails[filename] = output_errors(filename, errors)
             elif not errors and filename in blacklist:
@@ -405,13 +405,13 @@ class TestBadExceptions(object):
         fails = {}
         passes = []
         for path, filename in walk_python_files():
-            f = open(path, "r")
-            count = 1
-            errors = []
-            for line in f:
-                if re_nasty_exception.search(line):
-                    errors.append("ln:%s \t%s" % (count, line[:-1]))
-                count += 1
+            with open(path, "r") as f:
+                count = 1
+                errors = []
+                for line in f:
+                    if re_nasty_exception.search(line):
+                        errors.append("ln:%s \t%s" % (count, line[:-1]))
+                    count += 1
             if errors and filename not in blacklist:
                 fails[filename] = output_errors(filename, errors)
             elif not errors and filename in blacklist:
