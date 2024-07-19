@@ -29,16 +29,31 @@ def db():
 
 
 @db.command()
-def init():
-    """Initialize the database.
+@click.option('-v', '--version', help='Migration version', default='head')
+@click.option('--skip-plugins', is_flag=True, help='Skip plugin migrations')
+@click.option('--skip-core', is_flag=True, help='Skip core migrations')
+@click.pass_context
+@applies_to_plugin
+def init(
+        ctx: click.Context, version: str, plugin: str,
+        skip_core: bool, skip_plugins: bool
+):
+
+    """Initialize the database (alias of `ckan db upgrade`)
     """
-    log.info(u"Initialize the Database")
+    ctx.forward(upgrade)
+
+
+@db.command()
+def create_from_model():
+    """Initialize database from the model instead of migrations.
+    """
     try:
-        model.repo.init_db()
+        model.repo.create_db()
     except Exception as e:
         error_shout(e)
     else:
-        click.secho(u'Initialising DB: SUCCESS', fg=u'green', bold=True)
+        click.secho('Create DB from model: SUCCESS', fg='green', bold=True)
 
 
 PROMPT_MSG = u'This will delete all of your data!\nDo you want to continue?'
@@ -67,7 +82,7 @@ def upgrade(
         ctx: click.Context, version: str, plugin: str,
         skip_core: bool, skip_plugins: bool
 ):
-    """Upgrade the database.
+    """Upgrade or initialize the database.
     """
     if not skip_core:
         _run_migrations(plugin, version)

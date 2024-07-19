@@ -66,9 +66,8 @@ def test_03_update_package_from_dict():
     package = model.Package.by_name("council-owned-litter-bins")
 
     # update package
-    package.name = u"new_name"
-    extra = model.PackageExtra(key="published_by", value="barrow")
-    package._extras[extra.key] = extra
+    package.name = "new_name"
+    package.extras["published_by"] = "barrow"
     model.repo.commit_and_remove()
 
     assert query.run({"q": ""})["count"] == 2
@@ -196,10 +195,9 @@ def test_allowed_local_params_via_config_not_defined():
     assert str(e.value) == "Local parameters are not supported in param 'q'."
 
 
-@pytest.mark.ckan_config("ckan.search.solr_allowed_query_parsers", "bool knn")
+@pytest.mark.ckan_config("ckan.search.solr_allowed_query_parsers", "bool knn lucene")
 @pytest.mark.usefixtures("clean_index")
 def test_allowed_local_params_via_config():
-
     factories.Dataset(title="A dataset about bees")
     factories.Dataset(title="A dataset about butterflies")
     query = search.query_for(model.Package)
@@ -212,3 +210,7 @@ def test_allowed_local_params_via_config():
     assert query.run({"q": "{!type=bool must=beetles}", "defType": "lucene"})["count"] == 0
 
     assert query.run({"q": "{!must=bees type=bool}", "defType": "lucene"})["count"] == 1
+
+    # Support dot symbol in keys
+    assert query.run({"fq": "{!lucene q.op=AND}bees butterflies"})["count"] == 0
+    assert query.run({"fq": "{!lucene q.op=OR}bees butterflies"})["count"] == 2

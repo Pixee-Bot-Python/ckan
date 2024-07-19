@@ -293,7 +293,8 @@ def _get_field_info(
     try:
         return dict(
             (n, json.loads(v)) for (n, v) in
-            connection.execute(qtext, {"res_id": resource_id}).fetchall())
+            connection.execute(qtext, {"res_id": resource_id}).fetchall()
+            if v)
     except (TypeError, ValueError):  # don't die on non-json comments
         return {}
 
@@ -1217,6 +1218,9 @@ def upsert_data(context: Context, data_dict: dict[str, Any]):
     records = data_dict['records']
     sql_columns = ", ".join(
         identifier(name) for name in field_names)
+    if not sql_columns:
+        # insert w/ no columns is a postgres error
+        return
     num = -1
 
     if method == _INSERT:
@@ -2315,7 +2319,12 @@ class DatastorePostgresqlBackend(DatastoreBackend):
             info['meta']['aliases'] = aliases
 
             # get the data dictionary for the resource
-            data_dictionary = datastore_helpers.datastore_dictionary(id)
+            with engine.connect() as conn:
+                data_dictionary = _result_fields(
+                    _get_fields_types(conn, id),
+                    _get_field_info(conn, id),
+                    None
+                )
 
             schema_sql = sa.text(f'''
                 SELECT
@@ -2361,6 +2370,8 @@ class DatastorePostgresqlBackend(DatastoreBackend):
                 schemainfo[colname] = colinfo
 
             for field in data_dictionary:
+                if field['id'].startswith('_'):
+                    continue
                 field.update({'schema': schemainfo[field['id']]})
                 info['fields'].append(field)
 
